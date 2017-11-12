@@ -1,6 +1,4 @@
-\input{header}
-\begin{document}
-\lecture{Dynamic Memory Allocation}
+\chapter{Dynamic Memory Allocation}\label{ch:01-dynamic-memory}
 
 \tikzset{us/.style={fill=red!50}}
 \tikzset{fs/.style={fill=green!50}}
@@ -23,7 +21,7 @@
 \newcommand\fre[2]{\memblock{fs}{#1}{#2}}
 \newcommand\T{\tikz[baseline=2,scale=.4]}
 
-\section*{High Level Interface: \.{malloc} and \.{free}}
+\section{High Level Interface: \.{malloc} and \.{free}}
 
 The functions \.{malloc} and \.{free} are typically implemented in user space;
   for example, in the GNU implementation of the standard C library \.{glibc}.
@@ -97,7 +95,7 @@ Because we want $x+1$ to point to the object of type~$T$
   without overlap.
 
 
-\section*{Policies: First Fit, Best Fit, Buddy System}
+\section{Policies: First Fit, Best Fit, Buddy System}
 
 The high level \.{malloc}\slash\.{free} interface
   must be implemented in terms of a lower level interface.
@@ -231,7 +229,7 @@ Observe that the policies from above work for arrays of~$x$ for all~$x$,
 When the type~$x$ is irrelevant, we talk about an `array of cells',
   as opposed to `array of bytes' or `array of integers'.
 
-\section*{Implementation}
+\section{Implementation}
 
 To implement the policies from the previous section,
   we have some bookkeeping to do.
@@ -264,7 +262,7 @@ The presentation makes the simplifying assumption
 On the other hand,
   removing this simplifying assumption doesn't involve any interesting idea.)
 
-\subsection*{Free List}
+\subsection{Free List}
 
 A free list is just what the name says:
   a list of free blocks of memory.
@@ -338,7 +336,7 @@ Technically, used blocks only need $1$~cell, to store their own size;
     would make it cumbersome to transform a used block into a free one.
 
 
-\subsection*{First Fit, Best Fit}
+\subsection{First Fit, Best Fit}
 
 When $\.{malloc}(n)$ is called,
   we begin traversing the free list to find a free block.
@@ -399,7 +397,7 @@ They are not constant time operations, as most developers assume.
 You can find a C implementation for first fit, as described above,
   in the accompanying code.
 
-\subsection*{Buddy System}
+\subsection{Buddy System}
 
 In the buddy system block sizes can only be a power of two.
 So, for example, if the memory has size $2^{32}$,
@@ -416,7 +414,7 @@ Similarly, when gluing two buddies of order~$k$,
 For each free list,
   we typically enforce the same invariants that we had for first-fit and best-fit.
 
-\section*{Garbage Collection${}^\ast$}
+\section{Garbage Collection}
 
 With garbage collection,
   the user interface is even simpler:
@@ -488,7 +486,7 @@ If you want to know more, go and ask Richard Jones.
 You are lucky to have him in Canterbury --
   he is {\bf the} garbage collection person.
 
-\section*{Exercises}
+\section{Exercises}
 
 \begin{enumerate}
 \item
@@ -540,25 +538,10 @@ You are lucky to have him in Canterbury --
   Implement the buddy system, in C\null.
 \end{enumerate}
 
-\section*{References}
+\section{Notes}
 
-\begin{itemize}
-\item[{[1]}]
-  Wilson et al.,
-  \emph{Dynamic Storage Allocation: A Survey and Critical Review},
-  1995
-\item[{[2]}]
-  Knuth,
-  \emph{The Art of Computer Programming},
-  Volume~1, Section~2.5 (\emph{Dynamic Storage Allocation}),
-  1997
-\item[{[3]}]
-  Hunt, Larus,
-  \emph{Singularity: Rethinking the Software Stack},
-  2007
-\end{itemize}
-
-
-\end{document}
+\citet{taocp} Volume~2, Section~2.5 covers some theory behind memory allocation.
+\citet{survey-malloc} survey the state-of-the art in the 90s, making the case that theory tends to be useless in this area and one needs empirical studies.
+Finally, \citet{singularity} present an operating system that does garbage collection.
 
 % vim:spell:spelllang=en_gb:
