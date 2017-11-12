@@ -1,11 +1,9 @@
-\input{header}
-\begin{document}
-\lecture{Virtual Memory}
+\chapter{Virtual Memory}\label{ch:01-virtual-memory}
 
 % must cover:
 % - page-to-frame mapping is n-to-1
 
-\section*{Process Address Space}
+\section{Process Address Space}
 
 % plan: sparse, mmap, vmareas, typical structure, shared parts
 
@@ -151,7 +149,7 @@ To understand what some of these properties do,
   we need to look in some detail at how virtual addresses
   are translated into physical addresses.
 
-\section*{Translating Addresses}
+\section{Translating Addresses}
 
 % why pages, page tables
 
@@ -314,9 +312,9 @@ It can contain whether that page should or should not be writable;
 
 
 \todo{Add a section about page allocation.}
-%\section*{Page Allocation}
+%\section{Page Allocation}
 
-\section*{Exercises}
+\section{Exercises}
 
 \begin{enumerate}
 \item
@@ -378,28 +376,10 @@ It can contain whether that page should or should not be writable;
   Look at [4] to see how content-addressable memory is implemented.
 \end{enumerate}
 
-\section*{References}
+\section{Notes}
 
-\begin{itemize}
-\item[{[1]}]
-  Duarte,
-  \href%
-    {http://duartes.org/gustavo/blog/post/how-the-kernel-manages-your-memory/}%
-    {How the Kernel Manages Your Memory}.
-\item[{[2]}]
-  Vavrusa,
-  \href{http://marek.vavrusa.com/c/memory/2015/02/20/memory/}%
-    {What a C programmer should know about memory}.
-\item[{[3]}]
-  The \.{mm/} directory of the Linux kernel version~4.2.0.
-\item[{[4]}]
-  Pagiamtzis and Sheikholeslami,
-  \emph{Content-Addressable Memory (CAM) Circuits and Architectures:
-    A Tutorial and Survey},
-  2005.
-\end{itemize}
-
-
-\end{document}
+For more information on how operating systems handle memory, start with \citet{blog-cmem} and \citet{blog-kernelmem}.
+After that, look at the \.{mm/} directory of the Linux kernel.
+If you want to look at hardware, one fun place to start would be the TLB \citep{survey-cam}.
 
 % vim:spell:spelllang=en_gb:
