@@ -1,0 +1,484 @@
+\input{header}
+\begin{document}
+\lecture{Introduction to Operating Systems}
+
+\section*{Why Study Operating Systems?}
+
+The vast majority of programmers do \emph{not} work on operating systems.
+Given this, is it a good idea to invest time in learning about operating systems?
+Yes.
+Let's see why.
+
+There is so much software around that no human can comprehend more than a tiny fraction of it.
+How come we can keep writing software without getting hopelessly confused by its complexity?
+How come the software written nowadays does so much more than the software written 50~years ago?
+There is an unlikely person who'd know the answer to that last question:
+  Isaac Newton.
+He knew he saw far because he stood on the shoulders of giants.
+He may not know what `software' is.
+But, he'd probably guess that today's software stands on the shoulders of yesterday's software,
+  and that's how it does more.
+
+In fact, the whole edifice built by programmers looks like a skyscraper,
+  reaching up at dizzying heights because it is carefully built layer upon layer.
+Layer upon layer of abstraction.
+This idea, of having \emph{layers of abstraction},
+  is one of the most important ideas in computer science.
+In a sense,
+  the whole course is built to teach the concept of abstraction,
+  by example.
+Of course,
+  one may wonder why would operating systems be a particularly good source of examples of abstraction.
+Fair question.
+To answer it, let's get back to our skyscraper.
+It's silent around.
+But, if you look up, and if you look really carefully (perhaps with binoculars),
+  you'll see a lot of activity at the top.
+That's where the builders are!
+But --- hold on --- they seem to be doing something strange:
+  Instead of continuing up more or less as you'd expect,
+  there are several teams building in different directions.
+The skyscraper has branches!
+Why would they do such a thing?
+
+It's because they have strong opinions.
+Each team of builders thinks that the skyscraper should continue the way \emph{they} build it.
+Each team is unable to convince the other teams that \emph{theirs} is the right way to build.
+So, each team carries on with what they think is best.
+Eventually, what happens over and over in history is that one or two branches outlast the others.
+The others either collapse, or builders simply abandon them.
+The truth is that no one knows which will survive and which will collapse.
+
+What is this analogy supposed to mean?
+The top floors of the skyscraper represent the new software.
+Most active programmers work on fairly new pieces of software.
+This new software is built in a variety of ways,
+  and the truth is that nobody knows which of those ways is the `right' one.
+Of course, everybody has their favourite way of writing software.
+And, of course, everybody thinks they're right.
+And, of course, some of us will be `proved' right --- it's inevitable.
+Alas, that doesn't necessarily mean that some of us are better at predicting
+  which new software will pass the test of time.
+
+But, if we look into the past, we can \emph{see} which software passed the test of time.
+Operating systems are at level~1 of the skyscraper.
+Immense volumes of software are based on them, and they didn't crumble.
+Something about them must be right.
+
+\section*{What is an Operating System?}
+
+Many people who use computers can give examples of operating systems:
+  Windows, Android, iOS, macOS, Linux, and so on.
+Many people know that Android and iOS feel differently.
+And many people might think that operating systems are bound to certain devices:
+  Android to `Android phones',
+  iOS and macOS to Apple hardware,
+  Windows to Microsoft-compatible hardware,
+  and so on.
+But none of this addresses the question of what an operating system \emph{is}.
+For an analogy,
+  imagine that you asked someone what is a car,
+  and you received the following answer.
+Ford, Toyota, and BMW are cars.
+A Ford and a BMW feel differently.
+Also, Ford is manufactured in US, and BMW in Germany.
+After this answer,
+  you still don't know what a car \emph{is}.
+
+\medskip
+
+Operating systems are programs that sit between hardware and user applications.
+This means that applications can afford to ask fairly high-level things,
+  such as `give me $1$~MiB of memory where I can store data'.
+The operating system hears such a request and takes care of all the nitty-gritty details
+  necessary to make it happen on some particular hardware.
+
+Of course, the above definition is rather vague.
+In fact,
+  it's vague enough that almost everybody agrees
+  that it is a fair characterisation of operating systems.
+We can try to be more concrete, at the risk of alienating some friends,
+  who'd suddenly think we have a too narrow definition.
+Nevertheless, let's try.
+
+\df{POSIX} is a standard of what the operating system should offer applications.
+It lists C functions, command line utilities, and is in general rather comprehensive.
+We could define a (POSIX-compliant) operating system as being a piece of software
+  that implements the POSIX interface.
+But, POSIX lists for example the \.{malloc} function,
+  and some people would disagree that \.{malloc} is implemented in the operating system.
+Why?
+Two reasons are political, another is technical.
+
+Let's mention the political reasons only briefly.
+First, Windows implements only a small subset of POSIX,
+  and it is harsh to say that Windows is not an operating system.
+Second, on Linux systems,
+  the POSIX interface is implemented by two antagonist developer camps:
+  the kernel developers and the GNU developers.
+The kernel developers think the operating system is \emph{only} the kernel;
+  the GNU developers (e.g., Richard Stallman) disagree.
+
+Now back to the technical reason.
+The processor can run in two modes, typically called kernel and user.
+In kernel mode, the processor does what it is told.
+In user mode, the processor refuses to do some things that look odd.
+For example, if the code tries to access some memory it should not access,
+  then the processor interrupts the execution,
+  and jumps to a piece of code that handles such an `exceptional' situation.
+Some people, like the kernel developers,
+  prefer to define operating systems as follows:
+  the operating system is the code that runs in kernel mode.
+
+In this course we will look at some guts of the kernel,
+  but also at some guts that spill out of the kernel.
+In other words, we stick to the POSIX definition.
+
+\medskip
+
+This definition is not Windows-friendly and is not Android-friendly.
+But, that's OK:
+  throughout the course we shall use Linux as our primary example.
+We have only one primary example to keep things simple.
+Why is Linux that example?
+It is the basis of Android, iOS, and macOS;
+  so, if we learn about Linux we also learn about these other operating systems.
+Also, Linux is open source;
+  so, we can peek inside, and we can modify it.
+
+\section*{Compiling the Linux Kernel}
+
+You do not need to have a Linux machine to look at the Linux kernel.
+It is sufficient to have a Linux virtual machine.
+To set up an environment that allows you
+  to look at the kernel source, make modifications, and observe their effect,
+  follow the steps below:
+\begin{enumerate}
+\item Install \href{https://www.virtualbox.org/wiki/Downloads}{VirtualBox}.
+\item Create an Ubuntu virtual machine.
+  For that you'll need the
+    \href{https://www.ubuntu.com/download/desktop}%
+      {ISO image of an Ubuntu installation DVD}.
+\item Build and modify your kernel using
+  \href{https://wiki.ubuntu.com/Kernel/BuildYourOwnKernel}%
+    {instructions from the Ubuntu Wiki}.
+\end{enumerate}
+If you have any problem with the steps above,
+  then ask a question in the Moodle forum.
+
+\section*{Components of an Operating System}
+
+As mentioned above,
+  processors have two modes of operation,
+  called user mode and kernel mode.
+Applications usually run in user mode
+  but, every once in a while,
+   they need to perform a task in kernel mode.
+The switch between user and kernel mode
+  is achieved by doing a \emph{system call}.
+From the point of view of the application programmer,
+  a system call is not much different from a normal function call.
+In fact,
+  most of the time the programmer calls a normal function
+  which is part of the standard C library
+  and which happens to do very little else than forwarding to a system call.
+Such a function is called a \emph{wrapper} for a system call.
+
+Beneath this interface of system calls
+  lies the operating system code that does actual work.
+Some of this code is architecture-dependent,
+  so there is some truth to the common assumption
+  that an operating system is bound to a certain type of hardware.
+Let us look at an example.
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Linux~4.4 [MLOC] & \.{arch/} & \.{drivers/} & other \\
+\midrule
+headers (\.{*.h}) & 0.8 & 1.9 & 1.2 \\
+implementation (\.{*.c}) & 1.6 & 9.9 & 4.0 \\
+assembly (\.{*.S}) & 0.4 & 0.0 & 0.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+The numbers above are in MLOC:
+  {\bf m}ega (millions) {\bf l}ines {\bf o}f {\bf c}ode.
+We distinguish between three types of files.
+C code is in files with extension \.{.h}~or~\.{.c}:
+  in \.{.h} files one typically finds function signatures,
+    which define the interface between different parts of the code;
+  in \.{.c} files one typically finds the code that does actual work.
+Assembly code is in files with extension~\.{.S}.
+The kernel source is split among several directories,
+  two of which are \.{arch/} and \.{drivers/}.
+In \.{arch/}, one finds code that depends on the hardware;
+  for example,
+    one could find different implementations for a spin lock:
+    one implementation for ARM, another implementation for x86.
+In \.{drivers/},
+  one finds code that knows how to communicate with various devices;
+  for example, one could find code that knows how to interact
+    with a graphic card of a certain type.
+
+Most of the code of the Linux kernel is in the \.{drivers/} directory.
+There is less code, but still a considerable amount,
+  in the \.{arch/} directory,
+  including assembly code.
+In this module,
+  we will ignore the code in the \.{arch/} and \.{drivers/} directories.
+This choice is rather arbitrary:
+If we had more time, we would have covered those directories as well.
+
+\smallskip
+
+Let us make a short digression.
+Last year, I wrote about 10~thousand lines of code.
+But, I spend a considerable amount of time doing things
+  other than writing code.
+A programmer would write more code; say, 100~thousand lines of code per year.
+If such a person would be able to write the Linux kernel
+  without having to re-write any code ever,
+  then such a person would still need $\approx200$~years to finish.
+The Linux kernel is one big piece of software,
+  and it only exists because many programmers \emph{collaborated}!
+
+\smallskip
+
+Back from the digression.
+What do we find in the `other' directories?
+Mostly, code that manages the following hardware resources:
+  memory, hard drive, network, processor.
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+code to manage \dots & is in directory \dots \\
+\midrule
+memory & \.{mm/} \\
+hard drive & \.{fs/} \\
+network & \.{net/} \\
+processor & \.{kernel/} \\
+\bottomrule
+\end{tabular}
+\end{center}
+Another interesting directory is \.{tools/}:
+  It contains small, self-contained utilities
+    that help you loot at the kernel's internals while it runs.
+
+We will focus on ideas.
+However,
+  every once in a while we will see how ideas are fleshed out in code.
+In the privacy of your home,
+  you should spend a considerable amount of time goggling other people's code,
+  if you want to become a good programmer.
+
+
+\section*{C versus Java}
+
+Java was designed to look like C while avoiding some complications.
+Conversely, C looks like Java, but has some extra complications.
+Two important differences are memory management and undefined behaviour.
+Let us discuss them in turn.
+\todo{Add some details.}
+
+\smallskip
+
+In Java, you allocate memory using the \.{new} keyword.
+In C, you allocate memory using the \.{malloc} function.
+That's not much of a difference.
+For deallocation, however,
+  in Java you don't need to think about it but in C you do.
+When you are done with using a piece of memory,
+  Java will garbage collect it,
+  but C will leave it to linger around until \emph{you} throw it away
+    by calling the function \.{free}.
+
+\smallskip
+
+In Java, if you access an array out of bounds, you get an exception.
+In C, the standard says that anything can happen ---
+  the behaviour is undefined.
+This is sometimes known as the \emph{nasal demons} problem:
+  Strictly speaking,
+  if you access an array out of bounds,
+  a C compiler is within its right to make demons fly out of your nose.
+In practice, this almost never happens.
+More common behaviours are
+  (1)~segmentation fault (that is, the program crashes), or
+  (2)~the program continues but gives weird results.
+If you want to catch such problems,
+  you should use a tool called \.{valgrind}.
+There are also a few other tools that achieve similar results,
+  so you may want to google a bit to figure out which suits your needs best.
+However, neither \.{valgrind} nor other tools are a panacea:
+  there are multiple possible sources of undefined behaviour,
+  and it is difficult to detect them all.
+
+\smallskip
+
+The best reference for learning C is still the original book~[1].
+
+\section*{Content}
+
+The content is organized around four hardware components:
+  memory, hard drive, network card, and processor.
+For each of these,
+  we will first discuss how they are seen by applications.
+What applications see is not the real hardware but an idealized illusion.
+We then turn to studying how the operating system creates that illusion.
+
+The plan ahead is as follows:
+
+\begin{itemize}
+\item Lectures 1--2: introduction
+  \begin{itemize}
+  \item why study operating systems
+  \item what is an operating system
+  \item compiling the Linux kernel
+  \item components of an operating system
+  \item basics of the C programming language
+  \end{itemize}
+\item Lectures 3--5: memory
+  \begin{itemize}
+  \item interface offered to applications (\.{malloc}, \.{free})
+  \item implementation in the operating system
+    \begin{itemize}
+    \item memory allocation (free list, first fit, best fit)
+    \item caching
+      \begin{itemize}
+      \item ideal cache model
+      \item memory hierarchy
+      \item associativity
+      \item replacement strategies: FIFO, LRU, MIN
+      \end{itemize}
+    \item virtual memory (page table, thrashing, TLB)
+    \end{itemize}
+  \end{itemize}
+\item Lectures 6--7: hard drive
+  \begin{itemize}
+  \item interface offered to applications
+    \begin{itemize}
+    \item tree structure
+    \item permissions
+    \item high-level interface (\.{fopen}, \.{fclose}, \.{prinf}, \.{scanf})
+    \item low-level interface (\.{open}, \.{close}, \.{write}, \.{read})
+    \end{itemize}
+  \item implementation in the operating system
+    \begin{itemize}
+    \item dcache, dentries, i-nodes
+    \item tracking free/used space
+    \item I/O scheduling
+    \end{itemize}
+  \end{itemize}
+\item Lectures 8--9: network card
+  \begin{itemize}
+  \item interface offered to applications
+    \begin{itemize}
+    \item IP addresses, ports
+    \item sockets (\.{socket}, \.{connect}, \.{bind}, \.{listen})
+    \item name resolution (DNS, \.{getaddrinfo})
+    \item network administration tools
+      (\.{ip}, \.{tc}, \.{ss}, \.{nmap}, \.{tcpdump})
+    \end{itemize}
+  \item implementation in the operating system
+    \begin{itemize}
+    \item layers: link, network, transport, application
+    \item network protocols (IP)
+    \item transport protocols (TCP, UDP)
+    \item routing protocols (OSPF, IS-IS, BGP) and algorithms
+    \end{itemize}
+  \end{itemize}
+\item Lectures 10-11: processor
+  \begin{itemize}
+  \item interface offered to applications
+    \begin{itemize}
+    \item cooperative and preemptive multitasking
+    \item processes (\.{fork}, \.{wait})
+    \item messaging (POSIX message queues, pipes, signals)
+    \item threads (\.{pthread\_create}, \.{pthread\_join})
+    \item synchronization primitives
+      (mutex, condition variable, monitor, semaphore, RW lock)
+    \end{itemize}
+  \item implementation in operating system
+    \begin{itemize}
+    \item schedules: delay, utilisation, context switch, thread migration, real time
+    \item schedulers: round robin, CFS
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+\section*{Rules}
+
+\begin{itemize}
+\item
+  You should read the lecture notes.
+  Sections marked$^\ast$ with an asterisk are optional.
+\item
+  You should do the exercises from the lecture notes.
+  Important exercises are marked with $\blacktriangleright$.
+\item
+  On Moodle,
+    there is a forum for `discussions about lecture notes, including exercises'.
+  Use it for:
+  \begin{itemize}
+  \item asking for clarifications
+  \item reporting mistakes
+  \item suggesting improvements
+  \item asking for help with solving the exercises
+  \end{itemize}
+\item
+  We will have quizzes in lectures.
+  These are not assessed.
+\item
+  Lectures are \emph{not} guaranteed to be recorded.
+  Instead, MOOC-style videos are provided.
+\end{itemize}
+
+\section*{Exercises}
+
+\begin{enumerate}
+\item
+  $\blacktriangleright$
+  Read  `\href{http://blog.regehr.org/archives/164}{Why Take an Operating Systems Course?}'
+    by J Regehr.
+\item Google `why study operating systems?'
+\item Find a good reference for POSIX, on the Internet.
+\item
+  $\blacktriangleright$
+  Follow the steps in `Compiling the Linux Kernel'.
+\item Write a `hello world' program in C.
+\item What are operating systems?
+\item What is POSIX?
+\item
+  $\blacktriangleright$
+  Get familiar with the command \.{man}, including its \.{-k} option.
+\item
+  $\blacktriangleright$
+  Read `\href{http://blog.codinghorror.com/understanding-user-and-kernel-mode/}{Understanding User and Kernel Mode}'.
+\item
+  $\blacktriangleright$
+  Run `\.{man syscalls}' to see which system calls are available on your computer.
+  Sample a few of them, and look at their \.{man}ual pages;
+  for example, run
+    `\.{man chdir}',
+    `\.{man kill}',
+    and so on.
+%\item
+%  $\blacktriangleright$
+%  Study the \href{http://www.ibm.com/developerworks/linux/library/l-linux-kernel/}%
+%  {anatomy of the Linux kernel}.
+\end{enumerate}
+
+\section*{References}
+
+\begin{itemize}
+\item[{[1]}]
+  Kernighan, Ritchie,
+  \emph{The C Programming Language},
+  1988
+\item[{[2]}]
+  Linux kernel 4.4.0
+\end{itemize}
+
+\end{document}
+
+% vim:spell:spelllang=en_gb:
