@@ -1,0 +1,454 @@
+\input{header}
+\begin{document}
+\lecture{Implementing File Systems}
+
+\section*{Virtual File System}
+
+In the previous lecture,
+  we saw that UNIX-like operating systems pretend there is only one tree of files.
+We can identify nodes of this tree by paths, which are strings.
+Regular files are leafs of this tree.
+Once we get a handle on a regular file,
+  we can open it, read it, modify it, and close it.
+More interestingly, to the tree of files,
+  we can add whole subtrees, by mounting real file systems.
+Let us peek under the hood to see how Linux implements these operations.
+
+The following three data structures correspond to several concepts we saw:
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Concept & Data Structure & Defined in \\
+\midrule
+path step & \.{struct dentry} & \.{include/linux/dcache.h} \\
+tree node & \.{struct inode} & \.{include/linux/fs.h} \\
+open file & \.{struct file} & \.{include/linux/fs.h} \\
+\bottomrule
+\end{tabular}
+\end{center}
+These data structures are created on-demand, from the data existing on disk:
+If one wants to open a file \.{/a/b/c},
+  then several dentries, several inodes, and a file are created by the kernel.
+Once created, these data structures are kept around in memory for a while,
+  in a \emph{dcache} ({\bf d}irectory {\bf cache})
+    which maps path names to corresponding dentries.
+
+Recall that for a path like \.{/a/b/c}
+  we said that \.{a}, \.{b} and \.{c} are path steps.
+In our tree picture,
+  path steps correspond to labelled edges.
+Each \.{dentry} ({\bf d}irectory {\bf entry}) contains
+  its label,
+  information about its neighbours in the tree,
+  and a pointer to the tree node it points to.
+\begin{ccode}
+struct dentry {
+  struct qstr d_name;  // label on the edge; e.g. "a" in the  /a/b/c example
+  struct dentry * d_parent; // edge from above
+  struct list_head d_child; // sibling edges
+  struct list_head d_subdirs; // edges from below
+  struct inode * d_inode; // tree node, at the low end of the edge
+  // ...
+};
+\end{ccode}
+Each \.{inode} contains information about a file,
+  such as its owner, permissions, and modification times.
+\begin{ccode}
+struct inode { kuid_t i_uid; kgid_t i_gid; /* ... */ };
+\end{ccode}
+A user space file handle is essentially a reference to a kernel \.{struct file}.
+Each \.{file} tracks the current offset:
+\begin{ccode}
+struct file { struct inode * f_inode;  loff_t f_pos; /* ... */ };
+\end{ccode}
+
+These data structures give a uniform way to represent the tree of files;
+  that is, the virtual file system.
+But, recall that this tree is a patchwork of subtrees that correspond
+  to real file systems.
+How are these different file systems mixed?
+Each of the data structures from above remembers how to perform operations
+  specific to the real file system they are a part of:
+\begin{ccode}
+struct dentry { const struct dentry_operations * d_op; /* ... */ };
+struct inode { const struct inode_operations * i_op; /* ... */ };
+struct file { const struct file_operations * f_op; /* ... */ };
+\end{ccode}
+For example, the file operations include
+\begin{ccode}
+struct file_operations {
+  int (*open)(struct inode *, struct file *);
+  ssize_t (*read)(struct file *, char *, size_t, loff_t *);
+  int (*iterate)(struct file *, struct dir_context *);
+  // ...
+};
+\end{ccode}
+One could view this scheme as a way to do inheritance in C\null.
+
+If one creates a file, for example, the inode operation \.{create} gets called.
+This operation will be specific to the real file system
+  within which we create a file.
+The operation creates an \.{inode}, and populates its \.{i\_op} field.
+If the new \.{inode} is a directory,
+  then its \.{create} operation was likely set to be the same
+  as the \.{create} operation of the parent.
+But, in the virtual file system we sometimes cross boundaries
+  from one real file system to another real file system.
+This happens at \df{mount points}.
+So, let us talk briefly about mounting.
+
+Each file system, such as ext3 or VFAT or MINIX,
+  is described by a \.{struct file\_system\_type}.
+\begin{ccode}
+struct file_system_type {
+  const char * name;
+  struct dentry * (*mount)(struct file_system_type *, int, const char *, void *);
+  // ...
+};
+\end{ccode}
+You can see the names of the registered file system types by looking
+  at the file \.{/proc/filesystem}.
+(Incidentally, \.{/proc} is the mount point of a file system of type \.{procfs},
+  where the kernel publishes all kinds of useful information.)
+The main characteristic of a file system type, however, is not its name,
+  but its \.{mount} function.
+The \.{mount} function is a way to obtain the \.{dentry}
+  that is the root of a real file system,
+  also known as its mount point.
+The third argument could be, for example, the string `\.{/dev/sda1}'.
+Apart from returning the root \.{dentry},
+  the \.{mount} function also creates an instance of \.{struct super\_block}.
+\begin{ccode}
+struct super_block { const super_operations * s_op; /* ... */ };
+struct super_operations {
+  struct inode * (*alloc_inode)(struct super_block * sb);
+  void (*delete_inode)(struct inode *);
+  void (*dirty_inode)(struct inode *, int);
+  int (*write_inode)(struct inode *, int);
+  // ...
+};
+\end{ccode}
+There is one instance of \.{struct super\_block} for each mounted file system.
+Data is actually written to the backing store by the super operation
+  \.{write\_inode}.
+
+
+\section*{MINIX File System}
+
+Now let us look in some detail at how one particular file system is implemented.
+MINIX is not widely used ---
+  we look at it because its implementation is simple,
+  in comparison with the other file system types.
+Most of the relevant files are in \.{fs/minix/}.
+Several data structures related to the physical layout are in
+  \.{include/uapi/linux/minix\_fs.h}.
+
+The \.{struct file\_system\_type} for MINIX is declared in \.{fs/minix/inode.c}.
+\begin{ccode}
+static struct file_system_type minix_fs_type {
+  .name = "minix",
+  .mount = minix_mount,
+  .fs_flags = FS_REQUIRES_DEV,
+  // ...
+};
+\end{ccode}
+From here we find out that MINIX file systems require a device.
+A device is typically identified by an absolute path in the virtual file system.
+It could be something like the block special file \.{/dev/sda1},
+  or it could be a regular file.
+The function \.{minix\_mount} is defined in the same file.
+It delegates most of the work to the generic \.{mount\_bdev},
+  where \.{bdev} stands for block device.
+The function \.{mount\_bdev} is given a callback,
+  the function \.{minix\_fill\_super},
+  which does the MINIX-specific work.
+Let us take a look at it.
+
+The first thing it does is to read block~$1$ (not~$0$, which is for booting):
+\begin{ccode}
+static int minix_fill_super(struct super_block * s, void * data, int silent) {
+  // ...
+  if (!(bh = sb_bread(s, 1))) goto bad_sb;
+  ms = (struct minix_super_block *) bh->b_data;
+\end{ccode}
+where \.{minix\_super\_block} is defined in \.{minix\_fs.h}:
+\begin{ccode}
+struct minix_super_block {
+  __u16 s_ninodes;
+  __u16 s_nzones;
+  // ...
+};
+\end{ccode}
+There are two things to note here.
+First, we were able to call the function \.{sb\_read} to get a buffer for block~$1$:
+  this was possible because of the work done by \.{mount\_bdev}.
+Most of the interaction with the backing store is done through these \.{sb\_*}
+  functions, which read/write whole blocks, and cache them in memory, for speed.
+A block is often (but not always) the same size as a page: $4$~KiB.
+Second, \.{struct minix\_super\_node} defines the physical layout of the superblock.
+Indeed, the next thing that happens is that the information is copied
+  from \.{struct minix\_super\_node} into the in-memory representation
+  of a MINIX super node.
+\begin{ccode}
+  sbi = kzalloc(sizeof(struct minix_sb_info), GFP_KERNEL);
+  s->s_fs_info = sbi;
+  // ...
+  sbi->s_ninodes = ms->s_ninodes;
+  sbi->s_nzones = ms->s_nzones;
+  sbi->s_imap_zones = ms->s_imap_zones;
+  sbi->s_zmap_zones = ms->s_zmap_zones;
+  // ...
+\end{ccode}
+The next thing being done is that $\.{s\_imap\_zones}+\.{s\_zmap\_zones}$ blocks
+  are loaded in memory.
+\begin{ccode}
+  block = 2;
+  for (i = 0; i < sbi->s_imap_zones; i++, block++) sbi->s_imap[i] = sb_bread(s, block);
+  for (i = 0; i < sbi->s_zmap_zones; i++, block++) sbi->s_zmap[i] = sb_bread(s, block);
+\end{ccode}
+Finally, the root inode is read.
+\begin{ccode}
+  root_inode = minix_iget(s, MINIX_ROOT_NODE); // MINIX_ROOT_NODE is 1
+  s->s_root = d_make_root(root_inode);
+\end{ccode}
+The function \.{d\_make\_root} returns a \.{dentry},
+  which is the one eventually returned by \.{minix\_mount}.
+The function \.{minix\_iget} first invokes \.{iget\_locked},
+  which searches a global cache for inodes,
+  and then if that fails it reads from the device using \.{V2\_minix\_iget},
+  which in turn invokes \.{minix\_V2\_raw\_inode}.
+This latter function does some interesting offset computation:
+\begin{ccode}
+struct minix2_inode *
+minix_V2_raw_inode(struct super_block * sb, ino_t ino, struct buffer_head ** bh) {
+  struct minix_sb_info * sbi = minix_sb(sb);
+  int minix2_inodes_per_block = sb->s_blocksize / sizeof(struct minix2_inode);
+  // ...
+  ino--;
+  int block = 2 + sbi->s_imap_blocks + sbi->s_zmap->blocks
+    + ino / minix2_inodes_per_block;
+  *bh = sb_bread(sb, block);
+  // ...
+  struct minix2_inode * p = (void*) (*bh)->b_data;
+  return p + ino % minix2_inodes_per_block;
+};
+\end{ccode}
+OK, maybe not that interesting, but at least not completely trivial.
+You should definitely make sure you understand what happens above.
+
+\smallskip
+
+It turns out that the two groups of blocks at the beginning are bitmaps:
+  the first \.{s\_imap\_blocks} track which inodes are used,
+  the next \.{s\_zmap\_blocks} track which data blocks are used.
+
+\section*{Tracking Free Space}
+
+After so much code, let us step back into idea-land.
+File systems, like memory allocators,
+  need to track which space is available and which space is used.
+What is specific to file systems is that allocation is done in big chunks.
+Yes, even a one-byte file occupies a whole block, which takes a few kilobytes.
+Because allocation is done in big chunks,
+  file systems can use simpler methods of tracking free space.
+\todo{more explanations}
+
+Consider a file system with $2^n$~data blocks, each holding $2^k$~bits.
+We can track if one of these data blocks is used with $1$~bit.
+Thus, we need $2^n$~bits, which fit in $2^{n-k}$ extra blocks.
+For example, if there are $8192$~data blocks, each of $1024$~\emph{bytes},
+  then we can track which blocks are used by using \emph{one} extra block.
+This scheme is used by MINIX\null.
+
+Alternatively, one can simply list the blocks that are free, in a list.
+Consider again a file system with $2^n$~data blocks, each holding $2^k$~bits;
+  and \emph{no} extra blocks this time.
+To identify a block, we need a number from $\{0,1,2,\ldots,2^n-1\}$,
+  which we can store in $n$~bits.
+Thus, in one block we can fit $\lfloor 2^k/n\rfloor$ block addresses.
+If there are fewer free blocks, then we can store all their addresses in one block;
+  say, in block~$0$.
+If there are $\sim 2^n$ free blocks,
+  then we need $\sim 2^n/(2^k/n)=2^{n-k}/n$ blocks to keep track of free blocks.
+We can chain these blocks in a list.
+Thus, we store only $\lfloor 2^k/n \rfloor - 1$ free block addresses in one block:
+  the extra address is of the next block in the free list.
+How does the free list end?
+For example, by saying that the next block in it is block~$0$,
+  which we have designated as the head of the list.
+
+
+\section*{The Google File System}
+
+Last time, we also saw file systems that are distributed among many computers,
+  such as GFS (Google File System) and HDFS (Hadoop File System).
+Now we look at how GFS works.
+
+As seen in \autoref{fig:gfs},
+  GFS is implemented by several Linux machines,
+  one master and many chunk-servers.
+A chunk is a 64~MiB portion of a file.
+All files stored in GFS are split into such chunks,
+  which are stored as normal Linux files on chunk-servers.
+The master handles all operations that require coordination.
+For example,
+  all chunks have 64~bit handles which are produced by the master only,
+  to ensure that they are unique.
+When a client machine wants to perform an operation on a file
+  (read, write, record append, \dots),
+  it first asks the master for the chunk handle of the portion of interest.
+Together with the chunk handle,
+  the client also receives a list of chunk-server addresses
+  where the chunk is stored.
+From now on, the client interacts directly with chunk-servers.
+
+\begin{figure} % fig:gfs <<<
+\begin{center}
+\includegraphics[width=0.8\textwidth]{gfs-arch.jpg}
+\end{center}
+\caption{GFS Architecture
+\textcolor{darkgreen}{[TODO: redraw]}
+}\label{fig:gfs}
+\end{figure}
+% >>>
+
+GFS aims to work on cheap hardware, which fails relatively often.
+How is it then justified to have a single point of failure --- the master?
+First,
+  note that the master needs not be cheap,
+  because it is one computer out of hundreds or thousands.
+Second,
+  having a single master greatly simplifies the design of the whole system.
+For example, let us consider concurrency issues.
+Because hardware fails,
+  each chunk is stored in multiple replicas.
+Because there are multiple replicas,
+  possibly on different continents,
+  users may concurrently modify replicas of the same chunk.
+Because the replicas are in different locations,
+  it is difficult to say which modification occurred first.
+Solutions that rely on looking at the clock have an obvious problem:
+  which clock?
+(And, if we are to get technical, it is in fact \emph{impossible}
+  to say that one operation occurred before the other, because of special relativity.
+According to it, if the events happen in different places,
+  then we can come up with two observers, which move around really fast,
+  for which the two events are ordered differently.)
+Because of this difficulty in finding which write happened first,
+  GFS makes no guarantees.
+If it is somehow obvious that one write was first
+  (say, there's a day distance in-between),
+  then you will get what you expect.
+If GFS thinks it's not obvious, then it won't try hard:
+  it just picks \emph{some} order.
+Now think about a write operation that spans several chunks.
+GFS may even choose for each chunk a different order.
+Thus, you end up with a jumble of bytes from the two different write operations.
+This state of affairs is somehow considered tolerable,
+  because users can use record append operations if they want better guarantees,
+  as we saw last time.
+So, confusion about which byte should be at some position in a file is tolerable.
+But, confusion about which files \emph{exist} is a whole new level of wtf.
+And that's exactly what we would get
+  if the operations of file creation and file deletion were distributed.
+The master solves this problem.
+We don't want confusion about which files exist,
+  so we force create and delete operations to go through the master.
+The clock of the master is the arbiter.
+In fact,
+  chunk creation also has to go through the master,
+  and chunk handles are essentially the master's clock when the chunk was created.
+
+OK, but is well known that putting stuff on one computer
+  is easier than distributing it.
+This, however, does nothing to assuage our worries that the master
+  is a single point of failure.
+So, here's the third reason:
+  We can easily take snapshots of the master's state,
+  and copy them on different computers.
+If the master fails, we can recover its state from one of these backups.
+
+What is the master's state?
+One thing to realise is that the master is there to perform a series of operations
+  one after another, in order.
+(The order part is important, as we saw when we discussed file creation and deletion.)
+So, we could create a log which is a list of all the operations performed.
+We can then replay this log, to recreate the master's state.
+This is the basic approach taken by GFS, with some optimisations.
+
+If the log becomes too long, it might be impractical to replay it.
+Instead,
+  one can take a snapshot of the data-structures that the master has in memory.
+This is not trivial.
+Dumping to disk the whole data-structure takes time,
+  and you can't just stop the whole distributed file system while you do it.
+So, one has to use persistent data-structures,
+  as the ones common in functional languages.
+Most of the state is kept in dictionaries, which map keys to values
+For example,
+  one dictionary maps file paths to lists of chunk handles;
+  another dictionary maps chunk handles to lists of chunk-server addresses.
+An efficient data structure for such dictionaries that can be made persistent,
+  is the B-tree,
+  and GFS uses a modification thereof.
+\todo{Mention GC.}
+\todo{How data is moved, in a pipe.}
+
+
+\section*{Exercises}
+
+\begin{enumerate}
+\item
+  $\blacktriangleright$
+  Most of the information in \.{inode}s is readily available via the command \.{stat}.
+  Read `\.{man stat}'.
+\item
+  $\blacktriangleright$
+  What is an \.{inode}?
+  What is a \.{dentry}?
+  What is a \.{super\_block}?
+\item
+  Since a file can be memory mapped via \.{mmap},
+    it must be that the virtual file system interacts with the virtual memory.
+  How does this interaction work?
+\item
+  Read `\.{man mount}'.
+\item
+  $\blacktriangleright$
+  Consider a file system with $10^6$~blocks, each of $1024$~bytes:
+  $k$~blocks are reserved for a bitmap that tracks which data blocks are in use;
+  the other $10^6-k$~blocks are data blocks.
+  What is the minimum value of~$k$?
+\item
+  $\blacktriangleright$
+  Consider a file system with total size $16$~GiB, and blocks of $1$~KiB.
+  It tracks free space using the free list method.
+  How many block addresses fit in one block?
+\item
+  Which method for tracking free space in a file system would you use?
+  Why?
+  [Hint (not answer!): What happens to the free list when the file system fills up?]
+\item
+  Suppose a GFS cluster is made out of 999~chunk-servers and 1~master.
+  Initially, it was planned to spend \pounds100 on each computer.
+  An engineer, however, requested that \pounds3000 are spent on the master,
+    while still paying only \pounds100 for each chunk-server.
+  By how much did the budget increase, as a percent?
+\end{enumerate}
+
+\section*{References}
+
+\begin{itemize}
+\item[{[1]}]
+  Linux kernel 4.2.0,
+  \.{Documentation/filesystems/vfs.txt},
+  \.{fs/*},
+  and \.{fs/minix/*}
+\item[{[2]}]
+  Ghemawat et al., \emph{The Google File System}, 2003
+\end{itemize}
+
+
+\end{document}
+
+% vim:spell:spelllang=en_gb:
