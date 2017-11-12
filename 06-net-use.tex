@@ -1,8 +1,6 @@
-\input{header}
-\begin{document}
-\lecture{Network Basics}
+\chapter{Network Basics}\label{ch:06-net-use}
 
-\section*{Bandwidth and Latency}
+\section{Bandwidth and Latency}
 
 When using a network, there are two things we care about most: speed an reliability.
 Speed is measured by two metrics, bandwidth and latency, which we discuss here.
@@ -91,7 +89,7 @@ That is definitely \emph{not} an artificial example:
   Google `AWS Snowmobile'!
 
 
-\section*{Topology}
+\section{Topology}
 
 Networks are made of many interconnected computers.
 The most important property of a network is its \df{topology}:
@@ -126,7 +124,7 @@ And, such measures are surprisingly useful.
 For example,
   the minimum cut gives a simple way to asses the reliability of a network.
 
-\section*{Packets and Layers}
+\section{Packets and Layers}
 
 Computer networks resemble less the telephone system and more the mail system.
 To send mail, you put your writing in an envelope.
@@ -296,7 +294,7 @@ The transport and network layers are usually implemented in the operating system
 The link layer is partly implemented in the operating system,
   and partly in hardware components such as wireless network cards.
 
-\section*{Socket Programming}
+\section{Socket Programming}
 
 The interface offered by the operating system uses sockets.
 In other words,
@@ -351,7 +349,7 @@ At this point, both the client and the server can communicate
 See the accompanying \.{miniclient.c} and \.{miniserver.c}.
 
 
-\section*{Exercises}
+\section{Exercises}
 
 \begin{enumerate}
 \item
@@ -363,8 +361,5 @@ See the accompanying \.{miniclient.c} and \.{miniserver.c}.
 \item
   Look at `\.{man getaddrinfo}'.
 \end{enumerate}
-
-
-\end{document}
 
 % vim:spell:spelllang=en_gb:
