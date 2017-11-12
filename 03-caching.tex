@@ -1,15 +1,13 @@
-\input{header}
-\begin{document}
-\lecture{Caching}
+\chapter{Caching}\label{ch:caching}
 
-\section*{Cache Effects}
+\section{Cache Effects}
 
 You need to know about caching
   if your processor is significantly faster than your memory;
   or, more generally, if performing operations is faster than storing data.
 And --- guess what ---
   modern processors are awfully fast,
-  so you do need to know about caching~[1].
+  so you do need to know about caching \citep{blog-cpus-after80s}.
 Let's see some strangeness that caching can cause.
 Consider the following code:
 \begin{ccode}
@@ -87,7 +85,7 @@ To understand cache faults,
   let us look in more detail at caches.
 
 
-\section*{Ideal Cache Model}
+\section{Ideal Cache Model}
 
 Caches are everywhere.
 There is a cache between registers and RAM;
@@ -123,7 +121,7 @@ We want to write programs that work well with \emph{any} cache.
 If you are interested in how to do so,
   the keywords to search for are `cache-oblivious algorithms'.
 The definition we will use for an ideal cache
-  is from a seminal paper on such algorithms~[3].
+  is from a seminal paper on such algorithms \citep{cache-oblivious}.
 
 \begin{figure} % fig:ideal-cache <<<
 \begin{center}
@@ -231,7 +229,7 @@ The intention of this definition is to free us
 This is good because often actual implementations of the cache are complicated
   and because often we don't even know what the implementation is.
 
-\section*{Associativity and Replacement}
+\section{Associativity and Replacement}
 
 Any real cache, be it implemented in hardware or software,
   needs to specify algorithms for two operations:
@@ -444,7 +442,7 @@ To make this statement precise,
 \end{figure}
 
 MIN replacement is just as good as the ideal cache.
-\begin{theorem}[{Belady~1966}]\label{th:min-is-best}
+\begin{theorem}[{\citep{art-belady1966}}]\label{th:min-is-best}
 The replacement algorithm MIN achieves a minimum number of cache faults.
 \end{theorem}
 \begin{proof}[Proof$\,{}^\ast$]
@@ -516,7 +514,7 @@ MIN replacement may be just as good as the ideal cache,
   but it is also just as un-implementable.
 The following result tells us that two implementable replacement algorithms,
   FIFO and LRU, are not much worse than MIN\null.
-\begin{theorem}[{Sleator and Tarjan~1985}]\label{th:fifo-lru-almost-optimal}
+\begin{theorem}[{\citep{art-sleator1985}}]\label{th:fifo-lru-almost-optimal}
 Consider a fixed but arbitrary sequence of memory accesses.
 Let $f$~be the number of cache faults for the MIN replacement algorithm
   with a $(Z,L)$~cache.
@@ -583,7 +581,7 @@ However, this similarity is at a conceptual level ---
   because it would be too slow.
 
 
-\section*{LRU and Cache Size}
+\section{LRU and Cache Size}
 
 Once we fix our gaze on two particular replacement algorithms,
   LRU and FIFO,
@@ -713,14 +711,14 @@ From this observation and from \autoref{lem:suffix},
 Because $C^{Z_1}_n \subseteq C^{Z_2}_n$,
   if the small cache doesn't fault then the big cache can't fault.
 
-\section*{Exercises}
+\section{Exercises}
 
 \begin{enumerate}
 \item
   $\blacktriangleright$
   Explain the behaviour of the example from the section \emph{Cache Effects}.
 \item
-  Ostrovsky~[2] does \emph{not} observe a decrease in runtime
+  \citet{blog-cache-effects} does \emph{not} observe a decrease in runtime
     when $K$ goes from~$1$ to~$2$.
   Does the runtime decrease on your computer or not?
   [Hint: use the program \.{p3.c} that accompanies these notes.]
@@ -758,34 +756,5 @@ Because $C^{Z_1}_n \subseteq C^{Z_2}_n$,
   Prove \autoref{th:fifo-lru-almost-optimal}.
 \end{enumerate}
 
-\section*{References}
-
-\begin{itemize}
-\item[{[1]}]
-  Luu,
-  \href%
-    {http://danluu.com/new-cpu-features/}%
-    {What's New in CPUs Since the 80s and How Does It Affect Programmers?}
-\item[{[2]}]
-  Ostrovsky,
-  \href%
-    {http://igoro.com/archive/gallery-of-processor-cache-effects/}%
-    {Gallery of Processor Cache Effects}
-\item[{[3]}]
-  Frigo et al.,
-  \emph{Cache-Oblivious Algorithms},
-  1999
-\item[{[4]}]
-  Belady,
-  \emph{A Study of Replacement Algorithms for Virtual Storage Computers},
-  1966
-\item[{[5]}]
-  Sleator and Tarjan,
-  \emph{Amortized Efficiency of List Update and Paging Rules},
-  1985
-\end{itemize}
-
-
-\end{document}
 
 % vim:spell:spelllang=en_gb:fmr=<<<,>>>:
