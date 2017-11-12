@@ -1,8 +1,6 @@
-\input{header}
-\begin{document}
-\lecture{Network Internals}
+\chapter{Network Internals}\label{ch:07-net-impl}
 
-\section*{Command Line Tools}
+\section{Command Line Tools}
 
 Before we move on to implementation details,
   let us look at some command line tools.
@@ -134,7 +132,7 @@ Plus, IPv6 has way more addresses than the link-layer does.
 So, it makes less and less sense to insist on globally unique link-layer addresses.
 
 
-\section*{Network Protocols: IP, OSPF, IS-IS, BGP}
+\section{Network Protocols: IP, OSPF, IS-IS, BGP}
 
 Now that we've poked at the surface, let us dive into some internals.
 The main protocol implemented in the network layer is IP\null.
@@ -243,7 +241,7 @@ One open area of research nowadays
   they could possibly lead to bad situations, such as network partitions.
 
 
-\section*{Routing Algorithms}
+\section{Routing Algorithms}
 
 Most routing algorithms are based on the simple observation
   that a shortest path has a first step.
@@ -535,7 +533,7 @@ Also,
   which is why inter-domain protocols such as BGP are not fully automatic.
 
 
-\section*{Exercises}
+\section{Exercises}
 
 \begin{enumerate}
 \item
@@ -593,7 +591,7 @@ Also,
     while the argument runs.
 \end{enumerate}
 
-\section*{References}
+\section{Notes}
 
 \begin{itemize}
 \item[{[1]}]
