@@ -1,8 +1,6 @@
-\input{header}
-\begin{document}
-\lecture{Using File Systems}
+\chapter{Using File Systems}\label{ch:04-file-use}
 
-\section*{Tree Structure}
+\section{Tree Structure}
 
 The information in a file system is organised in a tree.
 Here is a (partial) tree of a UNIX-like operating system:
@@ -107,7 +105,7 @@ We can tell the operating system, as we did above,
   and thus grow subtrees in the unique VFS tree.
 
 
-\section*{Security}
+\section{Security}
 
 POSIX operating systems support at least the following basic system of permissions.
 Suppose we list details about a file:
@@ -145,7 +143,7 @@ Otherwise, the set~(3) of permissions is used.
 Apart from permissions, one could also use encrypted file systems.
 
 
-\section*{Reading and Writing Files}
+\section{Reading and Writing Files}
 
 POSIX defines two interfaces for interacting with files,
   a high-level one and a low-level one.
@@ -265,7 +263,7 @@ The function \.{close} closes a file descriptor.
 The functions \.{read} and \.{write} let us transport data to and from the file.
 
 
-\section*{Synchronous I/O Multiplexing${}^*$}
+\section{Synchronous I/O Multiplexing}
 
 Suppose a process needs to read several files in parallel.
 It could be that several files are ready to be read while others are not.
@@ -356,7 +354,7 @@ for (int i = 0; i < n; ++i) if (FD_ISSET(files[i], &all)) {
 The stream-based interface does not support synchronous I/O multiplexing.
 
 
-\section*{Distributed File Systems}
+\section{Distributed File Systems}
 
 % plan
 %   - overview: >1 computer, gfs&hdfs, databases on top
@@ -469,7 +467,7 @@ For example, HDFS, which is an open source file system similar to GFS,
   which is a thousand times bigger~[6].
 
 
-\section*{Exercises}
+\section{Exercises}
 
 \begin{enumerate}
 \item
@@ -542,7 +540,7 @@ For example, HDFS, which is an open source file system similar to GFS,
   Why was GFS optimised in this way?
 \end{enumerate}
 
-\section*{References}
+\section{Notes}
 
 \begin{itemize}
 \item[{[1]}]
@@ -568,7 +566,5 @@ For example, HDFS, which is an open source file system similar to GFS,
     {\emph{Apache Hadoop HDFS}}, 2017
 \end{itemize}
 
-
-\end{document}
 
 % vim:spell:spelllang=en_gb:
