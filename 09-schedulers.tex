@@ -1,8 +1,6 @@
-\input{header}
-\begin{document}
-\lecture{Schedulers}
+\chapter{Schedulers}\label{ch:09-schedulers}
 
-\section*{Threads and Schedules}
+\section{Threads and Schedules}
 
 \noindent
 A \df{scheduler} is an operating system component
@@ -67,7 +65,7 @@ Indeed, in schedule~1, thread~D runs on core~1 in the time interval $(4,5)$;
   and in schedule~2, it runs on core~2 in the time interval $(3,4)$.
 Notice that all intervals are after time~$3$ when the request arrived.
 
-\subsection*{Properties of Schedules}
+\subsection{Properties of Schedules}
 
 Schedules have several characteristics,
   such as response time, (core) utilisation, and context switching.
@@ -128,7 +126,7 @@ We care about context switches because they imply delays:
   after a context switch.
 So, schedule~1 is the best with respect to the number of context switches.
 
-\subsection*{Real Time}
+\subsection{Real Time}
 
 As we saw, there are several measures we can use to gauge how good schedules are.
 We can also combine several measures.
@@ -189,11 +187,11 @@ If it does, we say that the requests are \df{not schedulable}.
 
 
 
-\section*{Schedulers}
+\section{Schedulers}
 
 Now let us look at a few scheduling algorithms.
 
-\subsection*{FIFO Scheduler}
+\subsection{FIFO Scheduler}
 
 A FIFO scheduler maintains a queue of threads waiting to run.
 When a new request arrives,
@@ -207,7 +205,7 @@ As an example, schedule~1 from above is produced by a FIFO scheduler.
 You can find a FIFO scheduler simulator in the accompanying \.{FifoScheduler.java}.
 
 
-\subsection*{Round Robin Scheduler${}^\ast$}
+\subsection{Round Robin Scheduler}
 \todo{Make it non-optional?}
 
 A round robin scheduler is similar to a FIFO scheduler.
@@ -306,7 +304,7 @@ The first line says that at time~1 ({\tt @1})
 We can see that thread~A finished at time~$5$, with a delay of~$1$.
 The total delay of this schedule is $1+1+1+0+0=3$.
 
-\subsection*{Completely Fair Scheduler${}^\ast$}
+\subsection{Completely Fair Scheduler}
 
 In this section we look at the scheduler used by Linux\footnote{version~4.2},
   which is called \df{CFS} ({\bf c}ompletely {\bf f}air \textbf{s}cheduler).
@@ -428,7 +426,7 @@ The main difference from the round robin scheduler
   is that the queue is replaced by a priority queue,
   which is sorted by the virtual time.
 
-\section*{Scheduler Tuning}
+\section{Scheduler Tuning}
 
 The model we used so far is simplified.
 In reality, for example,
@@ -463,7 +461,7 @@ The accompanying program \.{affinity.c} uses \.{sched\_setaffinity}
   to illustrate the effect of data locality.
 
 
-\section*{Exercises}
+\section{Exercises}
 
 \begin{enumerate}
 \item
@@ -497,14 +495,12 @@ The accompanying program \.{affinity.c} uses \.{sched\_setaffinity}
   and how to choose them.
 \end{enumerate}
 
-\section*{References}
+\section{Notes}
 
 \begin{itemize}
 \item[{[1]}]
   Linux kernel 4.2.0, \.{Documentation/scheduler/sched-design-CFS.txt}
 \end{itemize}
 
-
-\end{document}
 
 % vim:spell:spelllang=en_gb:
