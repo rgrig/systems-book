@@ -1,6 +1,4 @@
-\input{header}
-\begin{document}
-\lecture{Processes and Threads}
+\chapter{Processes and Threads}\label{ch:08-multiprocessing}
 
 \noindent
 When computers first appeared they would execute one program at a time.
@@ -85,7 +83,7 @@ Terminology aside,
 Let us now look at how to use multiple processes and multiple threads
   on a POSIX operating system.
 
-\section*{Processes}
+\section{Processes}
 
 Here is a simple program that starts several worker processes:
 \begin{ccode}
@@ -184,7 +182,7 @@ As usual, be warned that real code must also handle exceptional situations,
 You can find a more or less complete example in the accompanying \.{pgrep.c}.
 
 
-\section*{Threads}
+\section{Threads}
 
 Processes are nicely isolated from one another by the operating system.
 But, on the negative side, forking a process is a fairly expensive operation,
@@ -353,7 +351,7 @@ If we also modify it, then we acquire the RW-lock in write mode.
 \todo{semaphore.h}
 
 
-\section*{Exercises}
+\section{Exercises}
 
 \begin{enumerate}
 \item
@@ -382,7 +380,7 @@ If we also modify it, then we acquire the RW-lock in write mode.
 \end{enumerate}
 
 
-\section*{References}
+\section{Notes}
 
 \begin{itemize}
 \item[{[1]}]
@@ -393,7 +391,5 @@ If we also modify it, then we acquire the RW-lock in write mode.
 \end{itemize}
 
 
-
-\end{document}
 
 % vim:spell:spelllang=en_gb:
