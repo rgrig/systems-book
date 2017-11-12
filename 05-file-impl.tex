@@ -1,8 +1,6 @@
-\input{header}
-\begin{document}
-\lecture{Implementing File Systems}
+\chapter{Implementing File Systems}\label{ch:05-file-impl}
 
-\section*{Virtual File System}
+\section{Virtual File System}
 
 In the previous lecture,
   we saw that UNIX-like operating systems pretend there is only one tree of files.
@@ -133,7 +131,7 @@ Data is actually written to the backing store by the super operation
   \.{write\_inode}.
 
 
-\section*{MINIX File System}
+\section{MINIX File System}
 
 Now let us look in some detail at how one particular file system is implemented.
 MINIX is not widely used ---
@@ -242,7 +240,7 @@ It turns out that the two groups of blocks at the beginning are bitmaps:
   the first \.{s\_imap\_blocks} track which inodes are used,
   the next \.{s\_zmap\_blocks} track which data blocks are used.
 
-\section*{Tracking Free Space}
+\section{Tracking Free Space}
 
 After so much code, let us step back into idea-land.
 File systems, like memory allocators,
@@ -278,7 +276,7 @@ For example, by saying that the next block in it is block~$0$,
   which we have designated as the head of the list.
 
 
-\section*{The Google File System}
+\section{The Google File System}
 
 Last time, we also saw file systems that are distributed among many computers,
   such as GFS (Google File System) and HDFS (Hadoop File System).
@@ -304,10 +302,22 @@ From now on, the client interacts directly with chunk-servers.
 
 \begin{figure} % fig:gfs <<<
 \begin{center}
-\includegraphics[width=0.8\textwidth]{gfs-arch.jpg}
+\begin{tikzpicture}[node distance=3cm and 8cm,on grid,auto]
+  \tikzset{comp/.style={draw,rectangle,align=center}}
+  \tikzset{msg/.style={draw,->}}
+\node[comp] (client) {Application \\ GFS client};
+\node[comp,right=of client] (master) {GFS master};
+\node[comp,below=of master] (chunk) {GFS chunkserver};
+\path[msg] (client) edge[bend left=10] node[above]{1:(file name, chunk index)} (master);
+\path[msg] (master) edge node[below]{2:(chunk handle, chunk locations)} (client);
+\path[msg] (client) edge[bend right=10] node[above,sloped] {3:(chunk handle,byte range)} (chunk);
+\path[msg] (chunk) edge[bend left=20] node[below,sloped] {4:(data bytes)} (client);
+\path[msg] (master) edge[bend left] node[right,sloped,anchor=south] {instructions} (chunk);
+\path[msg] (chunk) edge[bend left] node[left,sloped,anchor=south] {status} (master);
+\end{tikzpicture}
 \end{center}
 \caption{GFS Architecture
-\textcolor{darkgreen}{[TODO: redraw]}
+\textcolor{darkgreen}{[TODO: Add a bit more info about what master does.]}
 }\label{fig:gfs}
 \end{figure}
 % >>>
@@ -395,7 +405,7 @@ An efficient data structure for such dictionaries that can be made persistent,
 \todo{How data is moved, in a pipe.}
 
 
-\section*{Exercises}
+\section{Exercises}
 
 \begin{enumerate}
 \item
@@ -436,7 +446,7 @@ An efficient data structure for such dictionaries that can be made persistent,
   By how much did the budget increase, as a percent?
 \end{enumerate}
 
-\section*{References}
+\section{Notes}
 
 \begin{itemize}
 \item[{[1]}]
@@ -448,7 +458,5 @@ An efficient data structure for such dictionaries that can be made persistent,
   Ghemawat et al., \emph{The Google File System}, 2003
 \end{itemize}
 
-
-\end{document}
 
 % vim:spell:spelllang=en_gb:
