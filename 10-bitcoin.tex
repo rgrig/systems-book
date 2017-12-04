@@ -70,17 +70,46 @@ If you do so, you will have to pay interest.
 You will only do so if you believe that your business idea will work, and that in the future you will have more money than you have now.
 Conversely, banks lend money with interest only because there exist many people willing to borrow.
 
-Some people believe that in the current system, banks hold too much power.
+Some people believe that, in the current system, banks hold too much power.
 Bitcoin aims at solving this power imbalance problem.
 
+To understand how bitcoin works, you need some background on cryptography (\autoref{sec:bitcoin-crypto}), which is why bitcoin is said to be a \emph{cryptocurrency}.
+Once you understand the basics, we will look at what is a digital coin (\autoref{sec:bitcoin-coin}) and at how to keep a digital ledger of all transactions (\autoref{sec:bitcoin-ledger}).
+Finally, we look at what could go wrong (\autoref{sec:bitcoin-attacks}).
 
-\section{Cryptographic Primitives}
 
-\section{Coins}
+\section{Cryptographic Primitives}\label{sec:bitcoin-crypto}
 
-\section{Ledger}
+The two prerequisites for understanding bitcoin are (1)~public-key cryptography and (2)~cryptographic hashes.
 
-\section{Attacks}
+\subsection{Public Keys}
+
+In public-key cryptography, we rely on three operations: one that generates key pairs, and two inverse transformations on messages.
+\begin{align*}
+  G &: {\sf unit} \to \bigl( {\sf PrivateKey} \times {\sf PublicKey}\bigr) \\
+  E &: {\sf PublicKey} \to {\sf Message} \to {\sf Message} \\
+  D &: {\sf PrivateKey} \to {\sf Message} \to {\sf Message}
+\end{align*}
+Suppose we call $G()$ and we get back the pair $({\it pri},{\it pub})$, where $\it pri$ is the private key and ${\it pub}$ is the public key.
+We assume that it is difficult to find out ${\it pri}$ if you know ${\it pub}$.
+We will see later that there are some good reasons behind this assumption, but it is not a certainty.
+If we give $E$ a public key, then it becomes a function or the type ${\sf Message} \to {\sf Message}$, which transforms messages;
+similarly, if we give $D$ a private key, then it becomes a function which transforms messages.
+If $({\it pri}, {\it pub})$ come from the same call to $G$, then we should have that $E\,{\it pub}$ and $D\,{\it pri}$ are inverses:
+\begin{align*}
+  E\,{\it pub} \circ D\,{\it pri}
+  = D\,{\it pri} \circ E\,{\it pub}
+  = (\lambda x.\, x)
+\end{align*}
+
+
+\subsection{Hashing}
+
+\section{Coins}\label{sec:bitcoin-coin}
+
+\section{Ledger}\label{sec:bitcoin-ledger}
+
+\section{Attacks}\label{sec:bitcoin-attacks}
 
 \section{Exercises}
 
@@ -88,6 +117,9 @@ Bitcoin aims at solving this power imbalance problem.
 \section{Notes}
 
 For more historical information on money, I recommend Chapters 10~and~16 of \citet{sapiens}, and the YouTube videos that accompany the book.
+If you want to learn more about Bitcoin, see the original article \citep{bitcoin}, which is clear and lucid.
+
+
 
 % vim:spell:spelllang=en_gb:
 
