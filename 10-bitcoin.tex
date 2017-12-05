@@ -91,16 +91,46 @@ In public-key cryptography, we rely on three operations: one that generates key 
   D &: {\sf PrivateKey} \to {\sf Message} \to {\sf Message}
 \end{align*}
 Suppose we call $G()$ and we get back the pair $({\it pri},{\it pub})$, where $\it pri$ is the private key and ${\it pub}$ is the public key.
-We assume that it is difficult to find out ${\it pri}$ if you know ${\it pub}$.
+We assume that it is difficult to discover ${\it pri}$ if you know ${\it pub}$.
 We will see later that there are some good reasons behind this assumption, but it is not a certainty.
-If we give $E$ a public key, then it becomes a function or the type ${\sf Message} \to {\sf Message}$, which transforms messages;
+If we give $E$ a public key, then it becomes a function of the type ${\sf Message} \to {\sf Message}$, which transforms messages;
 similarly, if we give $D$ a private key, then it becomes a function which transforms messages.
 If $({\it pri}, {\it pub})$ come from the same call to $G$, then we should have that $E\,{\it pub}$ and $D\,{\it pri}$ are inverses:
 \begin{align*}
   E\,{\it pub} \circ D\,{\it pri}
   = D\,{\it pri} \circ E\,{\it pub}
-  = (\lambda x.\, x)
+  = {\tt id}
 \end{align*}
+
+The two common use-cases are \emph{encrypting} and \emph{signing} messages.
+Suppose that each person has a key pair.
+Let us write ${\it pri}_x$ for the private key of~$x$, and ${\it pub}$ for the public key of~$x$.
+The public keys are known by everyone; the private key ${\it pri}$ is known only to~$x$.
+Suppose now that Alice wants to send a message to Bob, but she wants to make sure that Courtney and other people cannot read it.
+What should she do?
+If Alice wants to say~$m$, she sends $E\,{\it pub}_{\rm Bob}\,m$ to Bob, and tells him the message is encrypted.
+Bob then computes $D\,{\it pri}_{\rm Bob}\,(E\,{\it pub}_{\rm Bob}\,m)$, which equals~$m$.
+For this computation, Bob's private key is required, so nobody else could do it.
+
+Now consider a different scenario.
+Alice wants to send message~$m$ to Bob.
+This time she does not care if somebody else reads the message.
+She wants, however, to make sure that Bob knows the message is from her.
+In this situation, she sends $D\,{\it pri}_{\rm Alice}\,m$, and then Bob computes $E\,{\it pub}_{\rm Alice}\,(D\,{\it pri}_{\rm Alice}\,m)=m$.
+
+OK, we saw some example uses of the functions $E$~and~$D$.
+But, why do we believe that such functions exists?
+One example is the basic RSA scheme, which works as follows:
+\medskip
+\begin{alg}
+\^  $G()$
+\0  let $p$ and $q$ be two distinct prime numbers, chosen randomly
+\0  let $e$ and $d$ be two integers such that $ed = 1 \pmod{(p-1)(q-1)}$
+\0  return $\bigl((pq,d),\, (pq,e)\bigr)$
+\end{alg}
+\medskip
+\noindent
+And we let both $E\,(n,b)\,a$ and $D\,(n,b)\,a$ to be $a^b \bmod n$.
 
 
 \subsection{Hashing}
@@ -113,6 +143,12 @@ If $({\it pri}, {\it pub})$ come from the same call to $G$, then we should have 
 
 \section{Exercises}
 
+\begin{enumerate}
+\item
+  $\blacktriangleright$
+  Suppose Alice wants to send a secret message to Bob, and she wants to sign the message.
+  How can she do it?
+\end{enumerate}
 
 \section{Notes}
 
