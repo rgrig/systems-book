@@ -131,7 +131,29 @@ One example is the basic RSA scheme, which works as follows:
 \medskip
 \noindent
 And we let both $E\,(n,b)\,a$ and $D\,(n,b)\,a$ to be $a^b \bmod n$.
+We can now check that $E\,(pq,e)$ and $D\,(pq,d)$ are inverses.
+\begin{align*}
+E\,(pq,e)\,\bigl(D\,(pq,d)\,m\bigr)
+  = E\,(pq,e)\,\bigl(m^d \bmod pq\bigr)
+  = \bigl(m^d \bmod pq\bigr)^e \bmod pq
+  = m^{ed} \bmod pq
+\end{align*}
+We want to show that $m^{ed}\equiv m \pmod{pq}$ for all~$m$.
+By the Chinese Reminder Theorem, we need to show that $m^{ed} \equiv m \pmod{p}$ and $m^{ed} \equiv m \pmod{q}$.
+These are clearly true for $m=0$.
+For $m>0$, Fermat's Little Theorem says that $m^{p-1} \equiv 1 \pmod{p}$.
+Since $ed-1 \equiv 0 \pmod{(p-1)(q-1)}$, we have that $m^{ed-1}=m^{(p-1)k}$ for some~$k$.
+Thus,
+\begin{align*}
+m^{ed} \equiv m \cdot m^{ed-1} \equiv m \cdot \bigl(m^{p-1}\bigr)^k \equiv m
+  \pmod{p}
+\end{align*}
+The case for $q$ is similar.
 
+RSA rests on the following statements about what is hard and what is easy to compute:
+(1)~We know how to generate big random prime (or very likely prime) numbers;
+(2)~If we know both $p$ and $q$, then we know how to efficiently invert a number modulo $(p-1)(q-1)$ (see Exercises);
+(3)~If we know $pq$, we do not know how compute $p$ and $q$ efficiently.
 
 \subsection{Hashing}
 
@@ -148,6 +170,17 @@ And we let both $E\,(n,b)\,a$ and $D\,(n,b)\,a$ to be $a^b \bmod n$.
   $\blacktriangleright$
   Suppose Alice wants to send a secret message to Bob, and she wants to sign the message.
   How can she do it?
+
+\item
+  For RSA, step~2 of key generation is not easy.
+  Look up how to do it; for example, in Wikipedia.
+
+\item
+  $\blacktriangleright$
+  In the RSA scheme, suppose $p=13$ and $q=7$.
+  These prime numbers 
+  Further, pick $e=5$ and $d=29$.
+
 \end{enumerate}
 
 \section{Notes}
