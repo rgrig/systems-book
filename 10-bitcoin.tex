@@ -150,16 +150,92 @@ m^{ed} \equiv m \cdot m^{ed-1} \equiv m \cdot \bigl(m^{p-1}\bigr)^k \equiv m
 \end{align*}
 The case for $q$ is similar.
 
-RSA rests on the following statements about what is hard and what is easy to compute:
-(1)~We know how to generate big random prime (or very likely prime) numbers;
+RSA rests on the following facts about what is hard and what is easy to compute:
+(1)~We know how to generate big random prime numbers (and often we even settle for numbers which are primes with high probability);
 (2)~If we know both $p$ and $q$, then we know how to efficiently invert a number modulo $(p-1)(q-1)$ (see Exercises);
 (3)~If we know $pq$, we do not know how compute $p$ and $q$ efficiently.
 
-\subsection{Hashing}
+
+\subsection{Hashing}\label{sec:bitcoin-hash}
+
+The signing scheme we saw in the previous section is somewhat awkward.
+You would expect a signature to be a short note you append to the message.
+We can make digital signatures resemble more the real signatures by using hashing.
+A \df{hash} function is a function $h:A\to B$ such that $A$ has more elements than~$B$.
+For concreteness, let us fix the domain~$A$ to be the set $\{0,1\}^*$ of all bitstrings, and the co-domain~$B$ to be the set $\{0,1\}^{256}$ of bitstrings with length exactly~$256$.
+Since there are more bitstrings than there are bitstrings of length~$256$, it must be that there exist different bitstrings with the same hash: $x\ne y$ and $h(x)=h(y)$, for some $x,y\in\{0,1\}^*$.
+Such a situation is called a \df{collision}.
+A \df{cryptographic hash} function is a hash function for which it is difficult to find collisions.
+More precisely, cryptographic hash functions come in families $\bigl\{h_s \mid s\in\{0,1\}^*\bigr\}$ indexed by bitstrings~$s$; that is, you tell me a bitstring~$s$ and I give you a particular hash function~$h_s$.
+We now consider algorithms that input~$s$ and output a pair $(x,y)$ that witnesses a collision of $h_s$.
+We allow these algorithms to use randomness (that is, they can throw coins), but we give then only a polynomial amount of time (that is, they need to meet some baseline of efficiency).
+If each such algorithm gets it right only with negligible chance (they might get it right if the coins turn out just right!), then we say that the hash $h$~is cryptographic.
+
+If it is hard to find collisions, then the following two tasks are also hard:
+\begin{enumerate}
+\item[(a)] Given $s$ and $x$, find $y$ such that $h_s(x)=h_s(y)$ and $x\ne y$.
+\item[(b)] Given $s$ and $b$, find $y$ such that $b=h_s(y)$.
+\end{enumerate}
+For example, let us show that an efficient solution to~(a) implies an efficient way of finding collisions.
+Assume we can solve~(a) efficiently.
+Then we find collisions as follows: pick a random~$x$ and then solve~(a).
+
+\medskip
+
+How do we use cryptographic hashing to sign messages?
+Let us get back to the scenario in which Alice wants to say~$m$ to Bob, and she wants Bob to know that the message is from her.
+Previously, we saw that she could send $D\,{\it pri}_{\rm Alice}\,m$.
+Instead, this time she computes $h_s(m)$ (for some fixed, known~$s$), and only uses her private key on this hash.
+She sends Bob the original message~$m$, followed by $D\,{\it pri}_{\rm Alice}\,\bigl(h_s(m)\bigr)$.
+When Bob receives these two pieces of information, he does two things:
+\begin{itemize}
+\item re-hash the message $m$ with the known $h_s$, and
+\item apply $E\,{\it pub}_{\rm Alice}$ to the signature:
+  $E\,{\it pub}_{\rm Alice}\,\bigl(D\,{\it pri}_{\rm Alice}\,\bigl(h_s(m)\bigr)\bigr)$
+\end{itemize}
+Finally, Bob simply checks if the two steps from above give the same result.
+
 
 \section{Coins}\label{sec:bitcoin-coin}
 
+We now have all the ingredients necessary to understand how digital (bit)coins work.
+A coin is a sequence of transactions:
+\begin{align*}
+  \ldots,
+  T_{AB},
+  T_{BC},
+  T_{CD}
+\end{align*}
+We will see later how this sequence starts.
+In transaction $T_{xy}$, the coin changes hands from~$x$ to~$y$.
+We say that $x$~is the \df{former owner} and $y$ is the \df{new owner}.
+Consider two consecutive transactions $T_{xy},T_{yz}$, and let us see what information goes into $T_{yz}$:
+\begin{itemize}
+\item a pointer to the previous transaction $T_{xy}$
+  (If you think of transactions as being stored in files, then this would be the filename where transaction $T_{xy}$ is stored);
+\item a public key of the new owner: ${\it pub}_z$;
+\item a signature created by the old owner:
+  $D\,({\it pri}_y)\,\bigl(h(T_{xy}\cdot{\it pub}_z)\bigr)$
+\end{itemize}
+\todo{how created}
+
+Given two transactions $T_{xy},T_{yz}$ anybody can check that they are correct.
+More precisely, anybody can check that the person who claims to give the coin in transaction $T_{yz}$ is the person who was given the coin in transaction $T_{xy}$.
+How?
+By looking at $T_{xy}$, we find ${\it pub}_y$, which is the public key of the person receiving the coin in transaction $T_{xy}$.
+Now we look at transaction $T_{yz}$ and extract from there the signature ${\it sig}$, which is supposed to be $D\,{\it pri}_y\,\bigl(h_s(T_{xy}\cdot{\it pub}_z)\bigr)$.
+We check whether this is indeed the case.
+First, we compute $E\,{\it pub}_y\,{\it sig}$.
+The result should be $h_s(T_{xy}\cdot{\it pub}_z)$.
+We check this by recomputing this hash, which we can do because we have both $T_{xy}$ and ${\it pub}_z$ (from $T_{yz}$).
+
+
 \section{Ledger}\label{sec:bitcoin-ledger}
+
+As we saw, anyone can verify that a coin is spent only by someone who was previously given that coin.
+However, anyone who was given a coin can spend it not just once but multiple times.
+We need a mechanism to make sure that such double-spending does not happen.
+
 
 \section{Attacks}\label{sec:bitcoin-attacks}
 
@@ -172,6 +248,7 @@ RSA rests on the following statements about what is hard and what is easy to com
   How can she do it?
 
 \item
+  \todo{Implement this.}
   For RSA, step~2 of key generation is not easy.
   Look up how to do it; for example, in Wikipedia.
 
@@ -184,6 +261,15 @@ RSA rests on the following statements about what is hard and what is easy to com
   What do we get if we encrypt $m=2$?
   What do we get if we decrypt $m=2$?
 
+\item
+  $\blacktriangleright$
+  In~\autoref{sec:bitcoin-hash} we saw two problems, (a)~and~(b).
+  Show that (a)~is at least as hard as~(b).
+
+\item
+  $\blacktriangleright$
+  Consider the signature scheme with hashing (\autoref{sec:bitcoin-hash}).
+  What could go wrong if Alice and Bob use a hashing function which is not cryptographic?
 \end{enumerate}
 
 \section{Notes}
