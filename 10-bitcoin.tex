@@ -75,7 +75,7 @@ Bitcoin aims at solving this power imbalance problem.
 
 To understand how bitcoin works, you need some background on cryptography (\autoref{sec:bitcoin-crypto}), which is why bitcoin is said to be a \emph{cryptocurrency}.
 Once you understand the basics, we will look at what is a digital coin (\autoref{sec:bitcoin-coin}) and at how to keep a digital ledger of all transactions (\autoref{sec:bitcoin-ledger}).
-Finally, we look at what could go wrong (\autoref{sec:bitcoin-attacks}).
+Finally, we look at some characteristics of bitcoin (\autoref{sec:bitcoin-props}).
 
 
 \section{Cryptographic Primitives}\label{sec:bitcoin-crypto}
@@ -217,7 +217,21 @@ Consider two consecutive transactions $T_{xy},T_{yz}$, and let us see what infor
 \item a signature created by the old owner:
   $D\,({\it pri}_y)\,\bigl(h(T_{xy}\cdot{\it pub}_z)\bigr)$
 \end{itemize}
-\todo{how created}
+
+Let us see how transaction $T_{yz}$ is created.
+The previous transaction $T_{xy}$ is publicly available.
+It contains a public key ${\it pub}_y$, for which someone holds the pair ${\it pri}_y$.
+We call this someone~$y$.
+Now, $y$ wants to give the coin to~$z$.
+To receive the coin, $z$ generates a fresh pair $({\it pri}_z,{\it pub}_z)$, keeps the private key ${\it pri}_z$ for themselves, but communicates the public key ${\it pub}_z$ to~$y$.
+Now $y$ can construct the transaction~$T_{yz}$: they put in it
+  the identifier of $T_{xy}$ (\emph{not} the transaction itself),
+  the key ${\it pub}_z$,
+  and a signature.
+The signature works as follows.
+First, concatenate (the content of) the previous transaction $T_{xy}$ with the key ${\it pub}_z$;
+second, take the concatenation and hash it;
+finally, sign the hash with the key ${\it pri}_y$, which only $y$ knows.
 
 Given two transactions $T_{xy},T_{yz}$ anybody can check that they are correct.
 More precisely, anybody can check that the person who claims to give the coin in transaction $T_{yz}$ is the person who was given the coin in transaction $T_{xy}$.
@@ -235,9 +249,111 @@ We check this by recomputing this hash, which we can do because we have both $T_
 As we saw, anyone can verify that a coin is spent only by someone who was previously given that coin.
 However, anyone who was given a coin can spend it not just once but multiple times.
 We need a mechanism to make sure that such double-spending does not happen.
+The solution is to have a global ledger, which can be seen by everyone.
+Then one would be able to check whether there exist two distinct transactions that claim the same predecessor.
+That would be a case of double-spending.
+Even better, one should not record such a second transaction in the public ledger.
+In fact, the public ledger needs to be written down by consensus of the majority, in a peer-to-peer fashion.
+
+When a coin exchanges hands, the old and new owner create a transaction~(\autoref{sec:bitcoin-coin}).
+This transaction is then broadcast to everyone in the peer-to-peer network.
+At any one point in time, there are several such would-be transactions floating around.
+Now comes the task of recording such transactions in the public ledger.
+This is done by collecting a set of would-be transactions in a block, and broadcasting this block.
+The blocks of the ledger are chained in a linked list: the $(n+1)$th block contains the hash of the $n$th block.
+(We have a chain of blocks: a \emph{blockchain}.)
+Of course, it is possible that several new blocks are being proposed, in which case consensus about which is the next block is achieved by voting.
+However, this scheme would break down if new blocks would be produced much faster than the voting can be carried out.
+And, might well be the case: putting several transactions in one block is something that involves work done on one computer and can be done rather quickly, while consensus/voting algorithms involve quite a bit of network communication.
+To solve this problem, bitcoin artificially slows down the process of creating new blocks.
+
+The basic idea is that blocks are considered valid only if their hash has a special property; for example, only if the hash is a multiple of a million.
+If we just put together some transactions it is very unlikely that we get something whose hash has the desired property.
+To fix this, we are allowed to add some garbage to the block (aka, a nonce).
+But, since hash functions are difficult to invert, it is difficult to do much better than trying various values for the garbage until we get lucky and obtain some block whose hash is `good'.
+
+Why would someone perform all this work of building blocks?
+There is an incentive to do so:
+The first transaction in each block is a special transaction, representing a \emph{new} coin.
+For this reason, the process of building blocks is known as `minting coins'.
 
 
-\section{Attacks}\label{sec:bitcoin-attacks}
+
+\section{Discussion}\label{sec:bitcoin-props}
+
+So far, we looked inside at Bitcoin's mechanisms, and we saw that they implement the basic requirements of money: coins can be passed on from one owner to another, and cannot be double-spent.
+But, money should also have some other properties, which are less easy to pin down.
+Let us discuss two issues: privacy and consensus.
+
+\subsection{Privacy}
+
+Who should be able to know how much money you earn?
+This is not an easy question.
+If you tell someone how much you earn, is it a one-off or should they be able to see how much you earn until you revoke their right to do so?
+Should the police be able to access financial records when they investigate a crime?
+Should your employer know how much they pay you?
+There are endless questions like this.
+
+The way money work now, small transactions are in cash and only the two parties involved know about it, while big transactions are made through banks and are recorded.
+The banks are the holders of these records, which gives them considerable power.
+In most places, governments can force banks to reveal parts of these records.
+But, in general, each country has its own government.
+Some of these governments are weak, others are corrupt.
+The government of Zimbabwe probably has no power to force a bank in UK to reveal its records.
+Another problem with banks holding financial records is that they are vulnerable to hacking:
+If one breaks into Barcalays computer system, they would presumably gain access to a \emph{lot} of information that should be private.
+
+In bitcoin, the trust model is rather different.
+In a way we are regressing, for bitcoin's trust model is similar to using cash for everything.
+Yes, there is a public ledger, but the identities of those involved in transactions are hidden.
+Having bitcoins is \emph{very} similar to having real coins; for example, you can lose bitcoins, they can be stolen, and if you pay someone in bitcoins then no one would now unless they witness the transaction.
+The government cannot force someone to make public financial information, because there is no one who knows that information in the first place.
+
+The analogy with the cash-based economy is not perfect.
+Even if there is no personally identifiable information in the public ledger, one could still conceivably analyze it and notice interesting patterns.
+For example, one may notice that whenever John Doe travels to Middlesex, there is a transaction of $17{,}143$ bitcoins registered in the ledger.
+But, noticing such patterns takes a lot of work and luck.
+
+And, of course, the main concern is that a cash-based economy cannot be regulated.
+If we cannot follow the money, how are we going to find criminals?
+
+
+\subsection{Consensus}
+
+\todo{Describe some consensus algo?}
+Let us first discuss briefly how consensus is built among honest nodes.
+Such nodes consider the public ledger to be the \emph{longest chain} of blocks.
+Whenever a node finds out about a longer chain, it broadcasts the news.
+Suppose a broadcast takes at most $\Delta$ seconds to propagate to everyone in the network.
+Suppose further that there are $n$~nodes in the network, and that each nodes needs $\delta$ seconds to build a block, on average.
+That means that the whole network produces $n/\delta$ blocks per second.
+And therefore, a block should expect that there are $n\Delta/\delta$ blocks it does not know about.
+By the first moment principle, the probability that there exists a block that the node does not know about is $\le n\Delta/\delta$.
+We want $n\Delta/\delta\le\epsilon$ for some small~$\epsilon$, which means we want $\delta\ge n\Delta/\epsilon$.
+For example, if it takes $\Delta=1\,\rm s$ to broadcast a message in the network, there are $n=10{,}000$ active bitcoin nodes, and we want nodes to spend at most $\epsilon=1\%$ of their time being in the dark about the last ledger block, then producing a block should take, on average
+\begin{align*}
+  10{,}000 \times 1 / 0.001 = 10^6\,{\rm s} \approx 11.6\,{\rm days}
+\end{align*}
+On the other hand, producing \emph{some} block somewhere in the network will take $\delta/n=100\,{\rm s}$ on average.
+Typically one would need to wait until a few blocks are recorder in the ledger to be sure that a transaction in which they received money is indeed there to stay.
+
+There are several observations to make about this calculations:
+\begin{itemize}
+\item
+  Bitcoin relies on a randomized algorithm.
+  That means we are not $100\%$ that consensus is reached properly, but only with (very!) high probability.
+\item
+  One needs to be careful about how to pick parameters such as (a)~how special the hash values of a block need to be and (b)~how many transactions fit in a block.
+\item
+  The parameters mentioned above depend on (i)~how fast and (ii)~how big the peer-to-peer network is.
+\item
+  When you receive a bitcoin, you need to wait some time until you are sure you actually received it.
+\item
+  The history is controlled by whoever holds the majority computational power.
+  So, yes, bitcoins can still be controlled and manipulated at will by some entity.
+  But, that entity needs to command more computation power than all the other bitcoin users.
+\end{itemize}
+
 
 \section{Exercises}
 
@@ -270,14 +386,26 @@ We need a mechanism to make sure that such double-spending does not happen.
   $\blacktriangleright$
   Consider the signature scheme with hashing (\autoref{sec:bitcoin-hash}).
   What could go wrong if Alice and Bob use a hashing function which is not cryptographic?
+
+\item
+  If we want to transfer $1000$ coins we could create $1000$ individual transaction, but this would be cumbersome.
+  Can you modify the basic mechanism to accommodate for coin aggregation?
+
+\item
+  The public ledger keeps growing in size.
+  Suppose we are not too interested in what happened more than $100$ years ago.
+  However, if someone received a coin more than $100$ years ago and did not spend it yet, should still be able to spend it.
+  How would you compress the public ledger without burning old money?
+
+\item
+  The analogue of having a physical coin is having a private key.
+  What is the analogue of having a wallet full of cash?
 \end{enumerate}
 
 \section{Notes}
 
 For more historical information on money, I recommend Chapters 10~and~16 of \citet{sapiens}, and the YouTube videos that accompany the book.
-If you want to learn more about Bitcoin, see the original article \citep{bitcoin}, which is clear and lucid.
-
-
+If you want to learn more about how Bitcoin works, see the original article \citep{bitcoin}, which is clear and lucid.
 
 % vim:spell:spelllang=en_gb:
 
