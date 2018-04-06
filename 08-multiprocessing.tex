@@ -7,7 +7,7 @@ Later,
   if they \df{cooperated}:
 programs had to be careful not to thrash each-other's data,
 and programs had to explicitly yield control to other programs from time to time.
-Nowadays these two tasks have been unloaded unto the operating system.
+Nowadays these two tasks have been unloaded on the operating system.
 The virtual memory subsystem takes care of isolating program from each-other;
 and multitasking is \df{pre-emptive},
   meaning that the operating system will preempt (that is, interrupt)
@@ -16,7 +16,7 @@ and multitasking is \df{pre-emptive},
 In other words, operating systems ensure
   (1)~that all programs access the processor, and
   (2)~that one crashing program does not bring down others.
-To achieve these tasks, operating system implement two concepts,
+To achieve these tasks, operating systems implement two concepts:
   threads and processes.
 Two threads running at the same time should get, roughly, the same processor time.
 A process is a group of threads which are isolated from threads in other processes.
@@ -38,7 +38,7 @@ The operating system sees a number of threads trying to run on several processor
 The operating system does not know what each thread tries to achieve.
 If there are, say, 8~threads trying to run on 4~cores,
   then the operating system ensures that each thread gets access
-    to the equivalent of half a core.
+    to the equivalent of $1/2$~core.
 Thus, if a program consists of more threads,
   then the program gets access to a bigger share of the processing resources.
 It should be noted, however,
@@ -63,7 +63,7 @@ Then, you ask the operating system to run several copies of the same server,
   in parallel, one for each client.
 The alternative would be to explicitly handle multiple clients,
   for example by using the \.{select} function,
-  as we saw in the lecture about using files.
+  as we saw in \autoref{ch:04-file-use}.
 
 Notice that the two reasons for using threads, efficiency and code organisation,
   are complementary.
@@ -71,8 +71,8 @@ We can organise the code into threads even if there is only one processing core.
 But, we can gain efficiency from multiple threads only if there are multiple cores.
 Some people insist we should be using different words
   to refer to these different uses of threads:
-  concurrency to refer to the efficiency-guided uses,
-  and parallelism to refer to the code organisation-guided uses.
+  parallelism to refer to the efficiency-guided uses,
+  and concurrency to refer to the code organisation-guided uses.
 However, although the two goals are clearly different,
   the terminology concurrency\slash parallelism is not entirely standard.
 At least in the context of garbage collection,
@@ -299,6 +299,7 @@ pthread_cond_wait(&condition_variable, &mutex);
 will release \.{mutex} (which must be held),
   wait until the condition variable is signaled,
   and then reaquire \.{mutex} and continue.
+\todo{Add more detail.}
 To signal a condition variable, you call
 \begin{ccode}
 pthread_cond_signal(&condition_variable);

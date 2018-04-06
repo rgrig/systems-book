@@ -114,9 +114,9 @@ rg@rg-2016:notes$ ls -l 03-file-use.tex
 -rw-rw-r-- 1 rg rg 3538 Mar 18 17:35 03-file-use.tex
 \end{verbatim}
 The first column contains three sets of permissions, namely
-  (1)~the user permissions \.{rw-},
-  (2)~the group permissions \.{rw-}, and
-  (3)~the other permissions \.{r--}.
+  (1)~the user permissions \hbox{\.{r\,w\,-}},
+  (2)~the group permissions \hbox{\.{r\,w\,-}}, and
+  (3)~the other permissions \hbox{\.{r\,-\,-}}.
 Each of those is a subset of \.{rwx}:
   \.{r} means `allowed to read',
   \.{w} means `allowed to write',
@@ -181,12 +181,7 @@ int main() {
 }
 \end{ccode}
 Why would \.{write} return before it writes $13$~bytes?
-Because \.{write} cannot guarantee both
-  (a)~that it writes all bytes, and
-  (b)~that it returns quickly.
-The design choice for the low-level interface is to prefer to return quickly.
-The design choice for the high-level interface is to write all bytes.
-A similar trade-off is made for reading.
+One possible reason is that the call is interrupted by a signal.
 
 In both the high-level and the low-level interface,
   one interacts with files in three phases:
