@@ -316,7 +316,7 @@ However, neither \.{valgrind} nor other tools are a panacea:
 
 The best reference for learning C is still the original book~\citep{c-book}.
 
-\section{Content}
+\section{Memory Abstractions, and Content of the Book}
 
 The content is organized around four hardware components:
   memory, hard drive, network card, and processor.
@@ -325,85 +325,54 @@ For each of these,
 What applications see is not the real hardware but an idealized illusion.
 We then turn to studying how the operating system creates that illusion.
 
-The plan ahead is as follows:\todo{Add bitcoin as example app.}
+For each of these components, there are several layers of abstraction.
+As a preview of what lies ahead, let us peek at the many layers of abstraction for memory.
+We have (1)~hardware bits, (2)~physical memory, (3)~virtual memory, (4)~dynamically allocated memory, and (5)~garbage collected memory.
+At the hardware level, a unit of memory is a circuit (for example, a flip-flop) that can remember one bit of information: one can write a bit (0 or 1) now, and ask for its value later.
+The physical memory has extra structure.
+First, bits are grouped into bytes: each byte is a group of 8~bits.
+Bytes are numbered in order; that is, they are given addresses from~$0$ to~$n-1$, where $n$~is usually some power of~$2$.
+For example, a computer with $16\,\rm GiB$ of memory has bytes numbered from~$0$ to~$2^{34}-1$.
+If you know the address of a byte, you can write to it or read from it.
+We say that the physical memory is an \emph{array of bytes}.
+Alternatively, the name \emph{RAM (random access memory)} emphasizes that the address can be anything (`random').
+For comparison, old tapes and even DVDs need time for the `head' to move from one part of the disk to another.
+So, whether you read bytes that lie at consecutive addresses or not \emph{will} make a difference.
 
-\begin{itemize}
-\item Lectures 1--2: introduction
-  \begin{itemize}
-  \item why study operating systems
-  \item what is an operating system
-  \item compiling the Linux kernel
-  \item components of an operating system
-  \item basics of the C programming language
-  \end{itemize}
-\item Lectures 3--5: memory
-  \begin{itemize}
-  \item interface offered to applications (\.{malloc}, \.{free})
-  \item implementation in the operating system
-    \begin{itemize}
-    \item memory allocation (free list, first fit, best fit)
-    \item caching
-      \begin{itemize}
-      \item ideal cache model
-      \item memory hierarchy
-      \item associativity
-      \item replacement strategies: FIFO, LRU, MIN
-      \end{itemize}
-    \item virtual memory (page table, thrashing, TLB)
-    \end{itemize}
-  \end{itemize}
-\item Lectures 6--7: hard drive
-  \begin{itemize}
-  \item interface offered to applications
-    \begin{itemize}
-    \item tree structure
-    \item permissions
-    \item high-level interface (\.{fopen}, \.{fclose}, \.{prinf}, \.{scanf})
-    \item low-level interface (\.{open}, \.{close}, \.{write}, \.{read})
-    \end{itemize}
-  \item implementation in the operating system
-    \begin{itemize}
-    \item dcache, dentries, i-nodes
-    \item tracking free/used space
-    \item I/O scheduling
-    \end{itemize}
-  \end{itemize}
-\item Lectures 8--9: network card
-  \begin{itemize}
-  \item interface offered to applications
-    \begin{itemize}
-    \item IP addresses, ports
-    \item sockets (\.{socket}, \.{connect}, \.{bind}, \.{listen})
-    \item name resolution (DNS, \.{getaddrinfo})
-    \item network administration tools
-      (\.{ip}, \.{tc}, \.{ss}, \.{nmap}, \.{tcpdump})
-    \end{itemize}
-  \item implementation in the operating system
-    \begin{itemize}
-    \item layers: link, network, transport, application
-    \item network protocols (IP)
-    \item transport protocols (TCP, UDP)
-    \item routing protocols (OSPF, IS-IS, BGP) and algorithms
-    \end{itemize}
-  \end{itemize}
-\item Lectures 10-11: processor
-  \begin{itemize}
-  \item interface offered to applications
-    \begin{itemize}
-    \item cooperative and preemptive multitasking
-    \item processes (\.{fork}, \.{wait})
-    \item messaging (POSIX message queues, pipes, signals)
-    \item threads (\.{pthread\_create}, \.{pthread\_join})
-    \item synchronization primitives
-      (mutex, condition variable, monitor, semaphore, RW lock)
-    \end{itemize}
-  \item implementation in operating system
-    \begin{itemize}
-    \item schedules: delay, utilisation, context switch, thread migration, real time
-    \item schedulers: round robin, CFS
-    \end{itemize}
-  \end{itemize}
-\end{itemize}
+The virtual memory is the next layer of abstraction up.
+The size of the virtual memory is independent of how much physical memory the computer has.
+The size of the virtual memory is usually larger than the size of the physical memory.
+For an analogy, think of bank accounts.
+If all Barclays clients would decide to withdraw all their money at the same time, then Barclays will most likely face a cash crisis.
+Yet, as long as such an extreme event does not happen, most of us can treat cash machines as an endless source of cash (provided that our \emph{virtual} account says we should have access to that cash).
+Furthermore, each program running on the computer gets its own virtual memory.
+This makes it easy to write programs without worrying much about which programs may run at the same time with your program on the same computer.
+
+One more level up we meet dynamically allocated memory.
+Here, the unit of information ceases to be the byte.
+Instead, we work with \emph{objects}, which are structured groups of bytes.
+Furthermore, we stop caring much about the address of each object.
+We still care about the identities of objects.
+For example, we may have an object that holds information about a student.
+We want this information to be somewhere in memory, but we don't care at which address.
+We do want, however, not to confuse two objects that hold information about two different students.
+That is, we want to be able to identify objects.
+Typically, we would identify objects by using the smallest address of one of its bytes.
+But, we will typically not care about the address of one object is bigger or smaller than the address of another object.
+
+And, finally, we get to garbage collected memory.
+With dynamically allocated memory, the programmer needs to say (a)~`I need $10$~bytes to store an object' and (b)~`I am done with these bytes you offered me earlier'.
+With garbage collected memory, the programmer needs to only say (a) but not~(b).
+That is, the programmer needs not track when they are done using an object.
+
+\medskip
+
+The plan ahead is as follows.
+Memory is discussed in \cref{ch:01-dynamic-memory,ch:02-virtual-memory,ch:caching}.
+Hard drives are discussed in \cref{ch:04-file-use,ch:05-file-impl}.
+Networks are discussed in \cref{ch:06-net-use,ch:07-net-impl}.
+Processors are discussed in \cref{ch:08-multiprocessing,ch:09-schedulers}.
+Finally, we see an example application that runs on top of an operating system: Bitcoin in \cref{ch:bitcoin}.
 
 \section{Rules}
 
