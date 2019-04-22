@@ -71,7 +71,7 @@ Schedules have several characteristics,
   such as response time, (core) utilisation, and context switching.
 
 The \df{response time} of one thread in a given schedule
-  is the time passed since the thread requests to start until it thread finishes.
+  is the time passed since the thread requests to start until it finishes.
 The \df{total response time} of a schedule
   is the sum of the response time of all the threads in that schedule.
 The \df{delay} of one thread in a given schedule
@@ -92,12 +92,12 @@ For example, in the example above,
     \cmidrule(lr){4-6} \cmidrule(lr){7-9} \cmidrule(l){10-12}
 Thread  & Request & Runtime & 1 & 2 & 3 & 1 & 2 & 3 & 1 & 2 & 3 \\
 \midrule
-A & 1 & 3 & 4 & 4 & 4 & 3 & 3 & 3 & 0 & 0 & 0 \\
+A & 1 & 3 & 4 & 5 & 5 & 3 & 4 & 4 & 0 & 1 & 1 \\
 B & 1 & 2 & 3 & 4 & 3 & 2 & 3 & 2 & 0 & 1 & 0 \\
 C & 2 & 4 & 7 & 7 & 7 & 5 & 5 & 5 & 1 & 1 & 1 \\
 D & 3 & 1 & 5 & 5 & 4 & 2 & 2 & 1 & 1 & 1 & 0 \\
 E & 6 & 1 & 7 & 7 & 7 & 1 & 1 & 1 & 0 & 0 & 0 \\
-{\bf Total} & & & & & & \bf 13 & \bf 14 & \bf 12 & \bf 2 & \bf 3 & \bf 1 \\
+{\bf Total} & & & & & & \bf 13 & \bf 15 & \bf 13 & \bf 2 & \bf 4 & \bf 2 \\
 \bottomrule
 \end{tabular}
 \end{center}
