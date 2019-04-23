@@ -224,7 +224,7 @@ A simple representation for such a function is a set of mappings; for example,
 \begin{align*}
   \{
   {\tt ba9876543}_{16} \mapsto {\tt edcba}_{16},\;
-  {\tt ba789abcd}_{16} \mapsto {\tt 12345}_{16},\;
+  {\tt ba989abcd}_{16} \mapsto {\tt 12345}_{16},\;
   {\tt 111111111}_{16} \mapsto {\tt 22222}_{16},\;
   \dots
   \}
@@ -236,18 +236,20 @@ Note that one cannot simply have an array indexed by the page number:
 %In the example above, we'd need an array of size~$2^{36}$.
 Instead, one uses a multi-level page-table:
 \begin{align*}
+\begin{aligned}
   \Bigl\{
-    {\tt ba9}_{16} \mapsto
+    {\tt ba9}_{16} &\mapsto
       \bigl\{
         {\tt 876}_{16} \mapsto \{ {\tt 543}_{16} \mapsto {\tt edcba}_{16}\},\;
         {\tt 89a}_{16} \mapsto \{ {\tt bcd}_{16} \mapsto {\tt 12345}_{16}\}
-      \bigr\},\;
-    {\tt 111}_{16} \mapsto
+      \bigr\},\\
+    {\tt 111}_{16} &\mapsto
       \bigl\{
-        {\tt 111}_{16} \mapsto \{ {\tt 111}_{16} \mapsto {\tt 222}_{16} \}
+        {\tt 111}_{16} \mapsto \{ {\tt 111}_{16} \mapsto {\tt 22222}_{16} \}
       \bigr\},\;
     \dots
   \Bigr\}
+\end{aligned}
 \end{align*}
 In this example, we first lookup the most significant $12$~bits of the page number,
   and the result is a nested page table;
